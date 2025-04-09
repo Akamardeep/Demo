@@ -9,14 +9,13 @@ jobs:
 
     steps:
  
-        
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v2
-      with:
-       role-to-assume: arn:aws:iam::060795920422:role/cicd
-       role-session-name: github-cicd-session
-       aws-region: eu-west-1
 
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+          role-to-assume: arn:aws:iam::060795920422:role/cicd
+          role-session-name: ECR
+          aws-region: eu-west-1
 
 
    
