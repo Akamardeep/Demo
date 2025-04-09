@@ -3,6 +3,12 @@ name: Build and Deploy with AWS Secrets
 on:
   workflow_dispatch:
 
+permissions:
+  id-token: write
+  contents: read
+  actions: read
+  security-events: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
