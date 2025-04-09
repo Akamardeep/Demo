@@ -1,9 +1,48 @@
-name:GitHub Actions Demo
-on:[push]
+name: Build and Deploy with AWS Secrets
+
+on:
+  workflow_dispatch:
+
 jobs:
-  Explore-Github-Actions:
-    runs-on:ubuntu-latest
+  build:
+    runs-on: ubuntu-latest
+
     steps:
-       -run:echo"Hello World"
-    steps:
-       -run:echo"Hello Amardeep"
+    - name: Configure AWS credentials with Assume Role
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}    
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: eu-west-1
+        role-to-assume: arn:aws:iam::060795920422:role/cicd
+        role-session-name: github-cicd-session
+
+    - name: Fetch AWS Secrets
+      id: fetch_secrets
+      run: |
+        secret=$(aws secretsmanager get-secret-value \
+          --secret-id mule-app/aws-keys \
+          --query SecretString \
+          --output text)
+
+        export DYNAMO_ACCESS_KEY=$(echo $secret | jq -r .accessKey)
+        export DYNAMO_SECRET_KEY=$(echo $secret | jq -r .secretKey)
+        export SQS_ACCESS_KEY=$(echo $secret | jq -r .sqsAccessKey)
+        export SQS_SECRET_KEY=$(echo $secret | jq -r .sqsSecretKey)
+
+        echo "DYNAMO_ACCESS_KEY=$DYNAMO_ACCESS_KEY" >> $GITHUB_ENV
+        echo "DYNAMO_SECRET_KEY=$DYNAMO_SECRET_KEY" >> $GITHUB_ENV
+        echo "SQS_ACCESS_KEY=$SQS_ACCESS_KEY" >> $GITHUB_ENV
+        echo "SQS_SECRET_KEY=$SQS_SECRET_KEY" >> $GITHUB_ENV
+
+
+    - name: Build and Deploy with Maven
+      run: |
+        # mvn clean deploy \
+        #   -P $MULESOFT_ENV \
+        #   -DdynamoDB.accessKey=$DYNAMO_ACCESS_KEY \
+        #   -DdynamoDB.secretKey=$DYNAMO_SECRET_KEY \
+        #   -DmuleDeploy \
+        #   -DskipMunitTests
+         echo "DYNAMO_ACCESS_KEY=$DYNAMO_ACCESS_KEY"
+         echo "DYNAMO_SECRET_KEY=$DYNAMO_SECRET_KEY" 
